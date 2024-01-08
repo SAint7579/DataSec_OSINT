@@ -14,6 +14,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common import exceptions
 import importlib
 import os
+from bs4 import BeautifulSoup
 
 class LocalFileAdapter(requests.adapters.HTTPAdapter):
     def build_response_from_file(self, request):
@@ -32,45 +33,82 @@ class LocalFileAdapter(requests.adapters.HTTPAdapter):
         return self.build_response_from_file(request)
 
 
+def start_browser():
+    #Setup browser
+    print("Opening Browser...")
+    options = Options()
+    options.add_argument("--disable-notifications")
+    options.add_argument("--disable-infobars")
+    options.add_argument("--mute-audio")
+    options.add_argument("--start-maximized")
+    #options.add_argument("headless")
+    # options.add_experimental_option("prefs",{"profile.managed_default_content_settings.images":2})
+    browser = Chrome(options=options)
+
+    return browser
+
+def sign_in(browser, FBEMAIL, FBPASS):
+    #Sign in
+    fb_start_page = 'https://m.facebook.com/'
+    fb_user = FBEMAIL
+    fb_pass = FBPASS
+    print("Logging in %s automatically..." % fb_user)
+    browser.get(fb_start_page)
+    email_id = browser.find_element(By.NAME, 'email')
+    pass_id = browser.find_element(By.NAME, 'pass')
+    email_id.send_keys(fb_user)
+    pass_id.send_keys(fb_pass)
+    pass_id.send_keys(u'\ue007')
+    time.sleep(3)
+
     
-def get_links(subject_name):
-    header = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:70.0) Gecko/20100101 Firefox/70.0","Cookie": 'sb=ufgMXRKi5bcIfSSMaIelRh5G; datr=ufgMXdM8hrLb-psr4lJbZwMo; c_user=100004912332911; xs=33%3AnSUFMmc3rtO1kg%3A2%3A1569653696%3A15717%3A8272; spin=r.1001436623_b.trunk_t.1573795693_s.1_v.2_; fr=0WfA239LUIWQj54ZH.AWX55JfOK3_vBs2e71NqKaucnlE.Bc8pR5.Ea.AAA.0.0.Bdz4xe.AWVLIfVN; presence=EDvF3EtimeF1573883961EuserFA21B04912332911A2EstateFDt3F_5bDiFA2user_3a1B07388262849A2EoF1EfF1C_5dEutc3F1573730942948G573883961180CEchFDp_5f1B04912332911F1CC; wd=616x657; act=1573884013894%2F10'}
-    htm = requests.get("https://www.facebook.com/search/people/?q="+subject_name,headers = header)
-    profiles = list()
-    for a in re.findall(r'<a title="[A-Za-z0-9 ]+" class="_32mo" .*?>',str(htm.content)) :
-        profiles.append((a.split('"')[1], a.split('"')[5]))
+def get_links(subject_name, driver):
+    ## Write a function to get to the search page and get all the links 
+    ## of the profiles that match the subject_name
+    driver.get("https://www.facebook.com/search/people/?q="+subject_name)
+    time.sleep(5)
+    page_source = driver.page_source
+    soup = BeautifulSoup(page_source, 'html.parser')
+    ## Find all anchor tags with aria-hidden="true"
+    anchors = soup.find_all('a', {'aria-hidden': 'true'})
+    ## Get all the hrefs
+    hrefs = [anchor.get('href') for anchor in anchors]
+    ## Filter out the None values
+    hrefs = list(filter(None, hrefs))
+    return hrefs
 
-    return profiles
+# chrome_options = webdriver.ChromeOptions()
+# prefs = {"profile.default_content_setting_values.notifications" : 2}
+# chrome_options.add_experimental_option("prefs",prefs)
+# chrome_options.add_argument("--headless")
+# driver = webdriver.Chrome("/home/archer/Documents/OSINT_India_Police_Hackathon/chromedriver",chrome_options=chrome_options)
+# # driver.maximize_window()
+# print("Logging in....")
+# driver.get("https://www.facebook.com/siddharth.mahajan.79")
+# element = driver.find_element_by_id("email")
+# element.send_keys(FBEMAIL)
+# element = driver.find_element_by_id("pass")
+# element.send_keys(FBPASS)
+# element = driver.find_element_by_id("loginbutton")
+# element.click()
+# print("Logged in....")
 
-chrome_options = webdriver.ChromeOptions()
-prefs = {"profile.default_content_setting_values.notifications" : 2}
-chrome_options.add_experimental_option("prefs",prefs)
-chrome_options.add_argument("--headless")
-driver = webdriver.Chrome("/home/archer/Documents/OSINT_India_Police_Hackathon/chromedriver",chrome_options=chrome_options)
-# driver.maximize_window()
-print("Logging in....")
-driver.get("https://www.facebook.com/siddharth.mahajan.79")
-element = driver.find_element_by_id("email")
-element.send_keys(FBEMAIL)
-element = driver.find_element_by_id("pass")
-element.send_keys(FBPASS)
-element = driver.find_element_by_id("loginbutton")
-element.click()
-print("Logged in....")
-
-def fetch_screen(name):
-    profiles = get_links(name)[:5]
+def fetch_screen(name, driver):
+    profiles = get_links(name,driver)[:5]
     count = 1
     linkandpic = []
-    for name,link in profiles:
+    for link in profiles:
         print("Fetching profile ",count)
-        driver.get(link)
-        driver.find_element_by_xpath("//*[@data-tab-key='photos']").click()
+        # if profile.php is in link then it is a profile link
+        if 'profile.php' in link:
+            driver.get(link+'&sk=photos')
+        else:
+            driver.get(link+'/photos')
         imct=1
         driver.execute_script("window.scrollTo(0, 500)")
         linkandpic.append([link,[]])
         while imct<=2:
-            time.sleep(2.5)
+            time.sleep(5)
             fname="Screenshot/"+str(count)+"_"+str(imct)+".png"
             driver.save_screenshot(fname)
             linkandpic[-1][1].append(fname)
@@ -79,8 +117,9 @@ def fetch_screen(name):
         count +=1
     return linkandpic
 
-def validate_profile(name,image):
-    lnpc=fetch_screen(name)
+
+def validate_profile(name,image,driver):
+    lnpc=fetch_screen(name,driver)
     recs=[]
     for i in lnpc:
         recs.append(i[1])
@@ -91,29 +130,29 @@ def validate_profile(name,image):
     
     
 
-def download_friends(url):
+def download_friends(url,browser):
     friends_html = "Friends/friends.html"
     url = list(url)
     url[10] = 'm'
     url.pop(8)
     url.pop(8)
     url = ''.join(url)
-    driver.get(url)
+    browser.get(url + '/friends')
     time.sleep(1)
-    driver.execute_script("window.scrollTo(0, 300)") 
-    driver.find_element_by_class_name("_7-1j").click()
+    browser.execute_script("window.scrollTo(0, 300)") 
+    # browser.find_element(By.XPATH, "//span[.='Friends']").click()
     time.sleep(2)
-    print('Scrolling to bottom...')
-    #Scroll to bottom
-    count = 0
-    while driver.find_elements_by_css_selector('#m_more_friends') and count < 5:
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        count+=1
-        time.sleep(1)
+    # print('Scrolling to bottom...')
+    # #Scroll to bottom
+    # count = 0
+    # while browser.find_elements_by_css_selector('#m_more_friends') and count < 5:
+    #     browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    #     count+=1
+    #     time.sleep(1)
 
     #Save friend list
     with open (friends_html, 'w', encoding="utf-8") as f:
-        f.write(driver.page_source)
+        f.write(browser.page_source)
         print('%s) Downloaded' % friends_html)
         
 def get_friends():
@@ -132,7 +171,7 @@ def get_friends():
         fname_link.append((name,link))
     return fname_link
 
-def get_information(profile_link):
+def get_information(profile_link,driver):
     username=profile_link.split("facebook.com/")[1]
     print("Username:",username)
     sections = {
@@ -149,10 +188,11 @@ def get_information(profile_link):
         'life_events': {'years':'(//div[@id="year-overviews"]/div[1]/div[2]/div[1]/div/div[1])'}
     }
     driver.get("https://mbasic.facebook.com/"+username+"/about")
-    name=driver.find_element_by_xpath('/html/body/div/div/div[2]/div/div[1]/div[1]/div[2]/div[1]/span/div/span/strong')
+    name=driver.find_element(By.XPATH, '/html/body/div/div/div[2]/div/div[1]/div[1]/div[2]/div[1]/span/div/span/strong')
     d = {'name': name.text}
-    x = driver.find_element_by_xpath
-    xs = driver.find_elements_by_xpath
+    d = {}
+    x = lambda x: driver.find_element(By.XPATH,x)
+    xs = lambda x: driver.find_element(By.XPATH,x)
     for k,v in sections.items():
         try:
             if 'src' in v:
@@ -208,16 +248,13 @@ def get_information(profile_link):
                         })
         except Exception:
             pass
-    info_str = ""
     for key in d.keys():
-        info_str = info_str + key.upper()+": "
+        print(key.upper(),": ",end="")
         if type(d[key]) is list:
-            info_str += "\n"
+            print("\n",end="")
             for itm in d[key]:
                 if type(itm) is dict:
                     for kff in itm.keys():
-                        info_str = info_str + "\t"+kff.upper()+": "+str(itm[kff])+"\n"
+                        print("\t",kff.upper(),":",itm[kff])
         else:
-            info_str = info_str + d[key]+"\n"
-    return info_str
-
+            print(d[key])

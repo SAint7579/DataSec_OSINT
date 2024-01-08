@@ -7,6 +7,7 @@ import requests
 import re
 from requests_testadapter import Resp
 from selenium.webdriver.common.by import By
+from bs4 import BeautifulSoup
 
 def start_browser():
     #Setup browser
@@ -35,6 +36,21 @@ def sign_in(browser, FBEMAIL, FBPASS):
     pass_id.send_keys(fb_pass)
     pass_id.send_keys(u'\ue007')
     time.sleep(3)
+
+def get_links(subject_name, driver):
+    ## Write a function to get to the search page and get all the links 
+    ## of the profiles that match the subject_name
+    driver.get("https://www.facebook.com/search/people/?q="+subject_name)
+    time.sleep(5)
+    page_source = driver.page_source
+    soup = BeautifulSoup(page_source, 'html.parser')
+    ## Find all anchor tags with aria-hidden="true"
+    anchors = soup.find_all('a', {'aria-hidden': 'true'})
+    ## Get all the hrefs
+    hrefs = [anchor.get('href') for anchor in anchors]
+    ## Filter out the None values
+    hrefs = list(filter(None, hrefs))
+    return hrefs
 
 def download_friends(url,browser):
     friends_html = "Friends/friends.html"

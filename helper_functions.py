@@ -8,22 +8,36 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import smtplib, ssl
 from selenium.webdriver.common.by import By
+from bs4 import BeautifulSoup
 
+# def get_links(subject_name, FBCOOKIE):
+#     header = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:70.0) Gecko/20100101 Firefox/70.0","Cookie": FBCOOKIE}
+#     htm = requests.get("https://www.facebook.com/search/people/?q="+subject_name,headers = header)
+#     file_path = 'output.html'
+#     # Open the file in write mode and write the HTML content
+#     with open(file_path, 'w', encoding='utf-8') as file:
+#         file.write(str(htm.text))
 
-def get_links(subject_name, FBCOOKIE):
-    header = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:70.0) Gecko/20100101 Firefox/70.0","Cookie": FBCOOKIE}
-    htm = requests.get("https://www.facebook.com/search/people/?q="+subject_name,headers = header)
-    file_path = 'output.html'
-    # Open the file in write mode and write the HTML content
-    with open(file_path, 'w', encoding='utf-8') as file:
-        file.write(str(htm.text))
+#     profiles = list()
+#     for a in re.findall(r'<a title="[A-Za-z0-9 ]+" class="_32mo" .*?>',str(htm.content)) :
+#         profiles.append((a.split('"')[1], a.split('"')[5]))
 
-    profiles = list()
-    for a in re.findall(r'<a title="[A-Za-z0-9 ]+" class="_32mo" .*?>',str(htm.content)) :
-        profiles.append((a.split('"')[1], a.split('"')[5]))
+#     return profiles
 
-    return profiles
-
+def get_links(subject_name, driver):
+    ## Write a function to get to the search page and get all the links 
+    ## of the profiles that match the subject_name
+    driver.get("https://www.facebook.com/search/people/?q="+subject_name)
+    time.sleep(5)
+    page_source = driver.page_source
+    soup = BeautifulSoup(page_source, 'html.parser')
+    ## Find all anchor tags with aria-hidden="true"
+    anchors = soup.find_all('a', {'aria-hidden': 'true'})
+    ## Get all the hrefs
+    hrefs = [anchor.get('href') for anchor in anchors]
+    ## Filter out the None values
+    hrefs = list(filter(None, hrefs))
+    return hrefs
 
 def fetch_screen(name, FBEMAIL, FBPASS):
     # profiles = get_links(name)[:5]
