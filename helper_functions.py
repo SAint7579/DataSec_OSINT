@@ -7,11 +7,17 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import smtplib, ssl
+from selenium.webdriver.common.by import By
 
 
-def get_links(subject_name):
+def get_links(subject_name, FBCOOKIE):
     header = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:70.0) Gecko/20100101 Firefox/70.0","Cookie": FBCOOKIE}
     htm = requests.get("https://www.facebook.com/search/people/?q="+subject_name,headers = header)
+    file_path = 'output.html'
+    # Open the file in write mode and write the HTML content
+    with open(file_path, 'w', encoding='utf-8') as file:
+        file.write(str(htm.text))
+
     profiles = list()
     for a in re.findall(r'<a title="[A-Za-z0-9 ]+" class="_32mo" .*?>',str(htm.content)) :
         profiles.append((a.split('"')[1], a.split('"')[5]))
@@ -19,26 +25,30 @@ def get_links(subject_name):
     return profiles
 
 
-def fetch_screen(name):
-    profiles = get_links(name)[:5]
+def fetch_screen(name, FBEMAIL, FBPASS):
+    # profiles = get_links(name)[:5]
 
     chrome_options = webdriver.ChromeOptions()
     prefs = {"profile.default_content_setting_values.notifications" : 2}
     chrome_options.add_experimental_option("prefs",prefs)
-    chrome_options.add_argument("--headless") 
+    # chrome_options.add_argument("--headless") 
 
 
-    driver = webdriver.Chrome(chrome_options=chrome_options)
+    driver = webdriver.Chrome(options=chrome_options)
     driver.maximize_window()
     print("Logging in....")
-    driver.get("https://www.facebook.com/siddharth.mahajan.79")
-    element = driver.find_element_by_id("email")
-    element.send_keys(FBEMAIL)
-    element = driver.find_element_by_id("pass")
-    element.send_keys(FBPASS)
-    element = driver.find_element_by_id("loginbutton")
-    element.click()
+    driver.get('https://www.facebook.com/')
+    driver.execute_script("window.scrollTo(0, 500)") 
+    cookies = driver.find_element(By.XPATH, "//button[@title='Decline optional cookies']")
+    cookies.click()
+    username_box = driver.find_element(By.NAME, 'email')
+    username_box.send_keys(FBEMAIL)
+    password_box = driver.find_element(By.NAME, 'pass')
+    password_box.send_keys(FBPASS)
+    login_box = driver.find_element(By.NAME, "login")
+    login_box.click()
     print("Logged in....")
+    time.sleep(5)
     count = 1
     linkandpic = []
     for name,link in profiles:
@@ -52,7 +62,7 @@ def fetch_screen(name):
         count +=1
     return linkandpic
 
-def send_mail(password,target):
+def send_mail(password,target, EMAIL):
     obj = smtplib.SMTP('smtp-mail.outlook.com',587)
     obj.ehlo()
     obj.starttls()

@@ -6,6 +6,7 @@ from datetime import datetime
 import requests
 import re
 from requests_testadapter import Resp
+from selenium.webdriver.common.by import By
 
 def start_browser():
     #Setup browser
@@ -21,15 +22,15 @@ def start_browser():
 
     return browser
 
-def sign_in(browser):
+def sign_in(browser, FBEMAIL, FBPASS):
     #Sign in
     fb_start_page = 'https://m.facebook.com/'
     fb_user = FBEMAIL
     fb_pass = FBPASS
     print("Logging in %s automatically..." % fb_user)
     browser.get(fb_start_page)
-    email_id = browser.find_element_by_id("m_login_email")
-    pass_id = browser.find_element_by_id("m_login_password")
+    email_id = browser.find_element(By.NAME, 'email')
+    pass_id = browser.find_element(By.NAME, 'pass')
     email_id.send_keys(fb_user)
     pass_id.send_keys(fb_pass)
     pass_id.send_keys(u'\ue007')
@@ -42,18 +43,18 @@ def download_friends(url,browser):
     url.pop(8)
     url.pop(8)
     url = ''.join(url)
-    browser.get(url)
+    browser.get(url + '/friends')
     time.sleep(1)
     browser.execute_script("window.scrollTo(0, 300)") 
-    browser.find_element_by_class_name("_7-1j").click()
+    # browser.find_element(By.XPATH, "//span[.='Friends']").click()
     time.sleep(2)
-    print('Scrolling to bottom...')
-    #Scroll to bottom
-    count = 0
-    while browser.find_elements_by_css_selector('#m_more_friends') and count < 5:
-        browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        count+=1
-        time.sleep(1)
+    # print('Scrolling to bottom...')
+    # #Scroll to bottom
+    # count = 0
+    # while browser.find_elements_by_css_selector('#m_more_friends') and count < 5:
+    #     browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    #     count+=1
+    #     time.sleep(1)
 
     #Save friend list
     with open (friends_html, 'w', encoding="utf-8") as f:
@@ -82,7 +83,7 @@ def get_friends():
     '''
     requests_session = requests.session()
     requests_session.mount('file://', LocalFileAdapter())
-    data = requests_session.get('file://C:/Users/Admin/Desktop/Friends/friends.html')
+    data = requests_session.get('file://C:/Users/vishw/OneDrive/Desktop/Projects/DataSec_OSINT/Friends/friends.html')
 
     fname_link = []
     for a in re.findall(r'<a href="/[A-Za-z0-9.=?]+">.*?</a>',str(data.content)) :
@@ -110,10 +111,11 @@ def get_information(profile_link,driver):
         'life_events': {'years':'(//div[@id="year-overviews"]/div[1]/div[2]/div[1]/div/div[1])'}
     }
     driver.get("https://mbasic.facebook.com/"+username+"/about")
-    name=driver.find_element_by_xpath('/html/body/div/div/div[2]/div/div[1]/div[1]/div[2]/div[1]/span/div/span/strong')
+    name=driver.find_element(By.XPATH, '/html/body/div/div/div[2]/div/div[1]/div[1]/div[2]/div[1]/span/div/span/strong')
     d = {'name': name.text}
-    x = driver.find_element_by_xpath
-    xs = driver.find_elements_by_xpath
+    d = {}
+    x = lambda x: driver.find_element(By.XPATH,x)
+    xs = lambda x: driver.find_element(By.XPATH,x)
     for k,v in sections.items():
         try:
             if 'src' in v:
