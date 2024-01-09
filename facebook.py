@@ -124,10 +124,10 @@ def validate_profile(name,image,driver):
     for i in lnpc:
         recs.append(i[1])
     print("Recognising and counting targets.")
-    pidx=face_utils.count_targets(image,recs)
+    pidx=face_utils.count_targets(['Test_images/Test.jpg'],recs)
     profile_link=lnpc[pidx][0].split("?ref")[0]
+
     return profile_link
-    
     
 
 def download_friends(url,browser):
