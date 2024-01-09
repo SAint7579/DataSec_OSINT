@@ -22,3 +22,43 @@ def get_twitter_followers(screenname):
         follower_list.append(u.name)
         
     return follower_list
+
+
+def get_twitter_following(screenname):
+    auth = tweepy.OAuthHandler(twitter_consumer_key, twitter_consumer_secret)
+    auth.set_access_token(twitter_access_token, twitter_access_secret)
+
+    api = tweepy.API(auth)
+
+        ids = []
+    for page in tweepy.Cursor(api.friends_ids, screen_name=screenname).pages():
+        ids.extend(page)
+
+    following_list = []
+    for i in ids:
+        u = api.get_user(i)
+        following_list.append(u.name)
+
+    return following_list
+
+
+def get_twitter_user_tweets(screenname, count=10):
+    auth = tweepy.OAuthHandler(twitter_consumer_key, twitter_consumer_secret)
+    auth.set_access_token(twitter_access_token, twitter_access_secret)
+
+    api = tweepy.API(auth)
+
+    try:
+        tweets = api.user_timeline(screen_name=screenname, count=count, tweet_mode='extended')
+        tweet_list = []
+        for tweet in tweets:
+            tweet_list.append({
+                'Tweet ID': tweet.id_str,
+                'Text': tweet.full_text,
+                'Created At': tweet.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'Retweets Count': tweet.retweet_count,
+                'Favorites Count': tweet.favorite_count
+            })
+        return tweet_list
+    except tweepy.TweepError as e:
+        return [{'Error': str(e)}]
