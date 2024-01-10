@@ -171,90 +171,75 @@ def get_friends():
         fname_link.append((name,link))
     return fname_link
 
-def get_information(profile_link,driver):
+def get_info(profile_link, driver):
+    '''
+    Get the information from the profile link from facebook
+
+    args:
+        profile_link: the link to the profile
+        driver: the selenium driver
+
+    returns:
+        a dictionary of the information
+    '''
     username=profile_link.split("facebook.com/")[1]
-    print("Username:",username)
-    sections = {
-        'photo_url': {'src':'//div[@id="objects_container"]//a/img[@alt][1]'},
-        'tagline': {'txt':'//*[@id="root"]/div[1]/div[1]/div[2]/div[2]'},
-        'about': {'txt':'//div[@id="bio"]/div/div[2]/div'},
-        'quotes': {'txt':'//*[@id="quote"]/div/div[2]/div'},
-        'rel': {'txt':'//div[@id="relationship"]/div/div[2]'},
-        'rel_partner': {'href':'//div[@id="relationship"]/div/div[2]//a'},
-        'details': {'table':'(//div[2]/div//div[@title]//'},
-        'work': {'workedu':'//*[@id="work"]/div[1]/div[2]/div'},
-        'education': {'workedu':'//*[@id="education"]/div[1]/div[2]/div'},
-        'family': {'fam':'//*[@id="family"]/div/div[2]/div'},
-        'life_events': {'years':'(//div[@id="year-overviews"]/div[1]/div[2]/div[1]/div/div[1])'}
-    }
     driver.get("https://mbasic.facebook.com/"+username+"/about")
-    name=driver.find_element(By.XPATH, '/html/body/div/div/div[2]/div/div[1]/div[1]/div[2]/div[1]/span/div/span/strong')
-    d = {'name': name.text}
-    d = {}
-    x = lambda x: driver.find_element(By.XPATH,x)
-    xs = lambda x: driver.find_element(By.XPATH,x)
-    for k,v in sections.items():
-        try:
-            if 'src' in v:
-                d[str(k)] = x(v['src']).get_attribute('src')
-            elif 'txt' in v:
-                d[str(k)] = x(v['txt']).text
-            elif 'href' in v:
-                d[str(k)] = x(v['href']).get_attribute('href')[8:].split('?')[0]
-            elif 'table' in v:
-                d['details'] = []
-                rows = xs(v['table']+'td[1])')
-                for i in range (1, len(rows)+1):
-                    deets_key = x(v['table']+'td[1])'+'['+str(i)+']').text
-                    deets_val = x(v['table']+'td[2])'+'['+str(i)+']').text
-                    d['details'].append({deets_key:deets_val})
-            elif 'workedu' in v:
-                d[str(k)] = []
-                base = v['workedu']
-                rows = xs(base)
-                for i in range (1, len(rows)+1):
-                    dd = {}
-                    dd['link'] = x(base+'['+str(i)+']'+'/div/div[1]//a').get_attribute('href')[8:].split('&')[0].split('/')[0]
-                    dd['org'] = x(base+'['+str(i)+']'+'/div/div[1]//a').text
-                    dd['lines'] = []
-                    lines = xs(base+'['+str(i)+']'+'/div/div[1]/div')
-                    for l in range (2, len(lines)+1):
-                        line = x(base+'['+str(i)+']'+'/div/div[1]/div'+'['+str(l)+']').text
-                        dd['lines'].append(line)
-                    d[str(k)].append(dd)
-            elif 'fam' in v:
-                d[str(k)] = []
-                base = v['fam']
-                rows = xs(base)
-                for i in range (1, len(rows)+1):
-                    d[str(k)].append({
-                        'name': x(base+'['+str(i)+']'+'//h3[1]').text,
-                        'rel': x(base+'['+str(i)+']'+'//h3[2]').text,
-                        'alias': x(base+'['+str(i)+']'+'//h3[1]/a').get_attribute('href')[8:].split('?')[0]
-                    })
-            elif 'life_events' in k:
-                d[str(k)] = []
-                base = v['years']
-                years = xs(base)
-                for i in range (1,len(years)+1):
-                    year = x(base+'['+str(i)+']'+'/div[1]').text
-                    events = xs(base+'['+str(i)+']'+'/div/div/a')
-                    for e in range(1,len(events)+1):
-                        event = x('('+base+'['+str(i)+']'+'/div/div/a)'+'['+str(e)+']')
-                        d[str(k)].append({
-                            'year': year,
-                            'title': event.text,
-                            'link': event.get_attribute('href')[8:].split('refid')[0]
-                        })
-        except Exception:
-            pass
-    for key in d.keys():
-        print(key.upper(),": ",end="")
-        if type(d[key]) is list:
-            print("\n",end="")
-            for itm in d[key]:
-                if type(itm) is dict:
-                    for kff in itm.keys():
-                        print("\t",kff.upper(),":",itm[kff])
-        else:
-            print(d[key])
+    def refine_list(fb_list):
+        refined = []
+        for f in fb_list:
+            if f[0] not in [i[0] for i in refined]:
+                refined.append(f)
+            ## If f is bigger than the existing list, replace existing with f
+            else:
+                idx = [i[0] for i in refined].index(f[0])
+                if len(f) > len(refined[idx]):
+                    refined[idx] = f
+        return refined
+
+    ## Use beautiful soup to parse the html
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+    edu = soup.find('div', {"id":"education"})
+    if edu:
+        edu = [i for i in edu.find_all('div')  if (i.find('a') and i.find('span'))]
+        edu = [[j.text for j in i.find_all('span')] + [i.find_all('span')[0].find('a')['href'] if i.find_all('span')[0].find('a') else None] for i in edu][2:]
+        edu = refine_list(edu)
+
+    work = soup.find('div', {"id":"work"})
+    if work:
+        work = [i for i in work.find_all('div')  if (i.find('a') and i.find('span'))]
+        work = [[j.text for j in i.find_all('span')] + [i.find_all('span')[0].find('a')['href'] if i.find_all('span')[0].find('a') else None] for i in work][2:]
+        work = refine_list(work)
+
+    living = soup.find('div', {"id":"living"})
+    if living:
+        living = [i for i in living.find_all('div')  if (i.find('a') and i.find('span'))]
+        living = [[i.find('span').text]  + ([j.text for j in i.find_all('a')] if i.find ('a') else [i.find('div', {"class":"el"}).text]) if [i.find('span')] else i.text for i in living][2:]
+        living = refine_list(living)
+
+    basic_info = soup.find('div', {"id":"basic-info"})
+    if basic_info:
+        basic_info = [i for i in basic_info.find_all('div')  if i.find('td')]
+        basic_info = [[j.text for j in i.find_all('td')]for i in basic_info][2:]
+        basic_info = refine_list(basic_info)
+
+    family = soup.find('div', {"id":"family"})
+    if family:
+        family = [i for i in family.find_all('div')  if i.find('h3')]
+        family = [[j.text for j in i.find_all('h3')] + ['https://www.facebook.com/' + i.find('h3').find('a')['href']] for i in family]
+        family = [i for i in family if len(i) == 3]
+
+    overview = soup.find('div', {"id":"year-overviews"})
+    if overview:
+        overview = [i for i in overview.find_all('div')  if i.find('a')]
+        overview = [[i,j] for i,j in  zip([i.find('a').text for i in overview],[i.text[:4] for i in overview]) if j.isnumeric()]
+        overview = refine_list(overview)
+
+    relation = soup.find('div', {"id":"relationship"})
+    if relation:
+        # relation = [i for i in relation.find_all('div')  if i.find('span')]
+        relation = [[i.text] for i in relation.find_all('div') if ('Relationship' not in i.text and len(i.text) > 1)]
+        relation = refine_list(relation)
+
+
+    return {'education':edu, 'work':work, 'living':living, 'basic_info':basic_info, 'family':family, 'relation':relation, 'overview':overview}
