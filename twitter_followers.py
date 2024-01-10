@@ -3,7 +3,7 @@ import tweepy
 twitter_consumer_key = VuQI7en91TTuQwBws8FDKt1nX
 twitter_consumer_secret = iwBUIkkgUeBRjCMgu8Yd8e51w476n8odlorSWqBTdvrMWBRoFV
 twitter_access_token = 1259607799127896064-QkmVJvUuY8GJzszJdNHYHALQUPDIuD
-twitter_access_secret = 5wosy5sWq8OPR9TfQjVCUQyQojL1MpxTTIEukmzk7LujY
+twitter_access_secret = "5wosy5sWq8OPR9TfQjVCUQyQojL1MpxTTIEukmzk7LujY"
 
 
 def get_twitter_followers(screenname):
