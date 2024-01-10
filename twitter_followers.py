@@ -30,7 +30,7 @@ def get_twitter_following(screenname):
 
     api = tweepy.API(auth)
 
-        ids = []
+    ids = []
     for page in tweepy.Cursor(api.friends_ids, screen_name=screenname).pages():
         ids.extend(page)
 
