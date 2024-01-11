@@ -1,0 +1,9 @@
+UI/cred.json
+UI/Screenshot
+Test_images/
+UI/target_image
+*.html
+*.php
+Demo.ipynb
+___pycache__/
+UI/__pycache__/

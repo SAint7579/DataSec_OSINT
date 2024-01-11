@@ -1,21 +1,29 @@
 import streamlit as st
 import os
 import sys
+import json
+from glob import glob 
 
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(os.path.join(os.path.dirname(__file__), "C:/Users/vishw/OneDrive/Desktop/Projects/DataSec_OSINT/"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "C:/Users/vishw/OneDrive/Desktop/Projects/DataSec_OSINT/Utils"))
 
+from facebook_utils import start_browser, sign_in, get_links, get_info, get_friends, validate_profile
 
-from facebook import start_browser, sign_in, get_links, get_info, get_friends
+## Read cred.json for username and password
+with open('C:/Users/vishw/OneDrive/Desktop/Projects/DataSec_OSINT/UI/cred.json') as f:
+    cred = json.load(f)
+    username = cred['username']
+    password = cred['password']
 
 def search_profile(full_name, images):
     browser = start_browser()
-    sign_in(browser, "email", "pass")
+    sign_in(browser, username, password)
 
-    links = get_links(full_name, browser)[:5] #Can comment this out if validate_profile works
+    # links = get_links(full_name, browser)[:5] #Can comment this out if validate_profile works
 
-    profile_link = links[0] # Can comment this out if validate_profile works
+    # profile_link = links[0] # Can comment this out if validate_profile works
 
-    #profile_link = validate_profile(full_name, images, browser) #Commented out since validate_profile is not working
+    profile_link = validate_profile(full_name, images, browser) #Commented out since validate_profile is not working
 
     personal_info = get_info(profile_link, browser)
 
@@ -37,6 +45,16 @@ uploaded_files = st.file_uploader("Choose multiple images", type=["jpg", "jpeg"]
 # Check if any images have been uploaded
 if uploaded_files is not None:
     st.write("You have uploaded", len(uploaded_files), "image(s).")
+    ## Move the files to Test_images folder
+    traget_folder = "C:/Users/vishw/OneDrive/Desktop/Projects/DataSec_OSINT/UI/target_image/"
+    ## Clear the target folder
+    for file in os.listdir(traget_folder):
+        os.remove(os.path.join(traget_folder, file))
+    ## Save the uploaded files to target folder
+    for file in uploaded_files:
+        with open(os.path.join(traget_folder, file.name), "wb") as f:
+            f.write(file.getbuffer())
+
 
 search_button = st.button(
             label="Search",
@@ -48,7 +66,7 @@ result_placeholder = st.empty()
 with st.spinner("Fetching information..."):
     if search_button:
         # Trigger the function when the button is pressed
-        result, friend_list = search_profile(full_name, uploaded_files)
+        result, friend_list = search_profile(full_name, glob(traget_folder+"*"))
         print(friend_list)
         
         # Display the result in a green box

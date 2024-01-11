@@ -59,14 +59,14 @@ def sign_in(browser, FBEMAIL, FBPASS):
     email_id.send_keys(fb_user)
     pass_id.send_keys(fb_pass)
     pass_id.send_keys(u'\ue007')
-    time.sleep(3)
+    time.sleep(1)
 
     
 def get_links(subject_name, driver):
     ## Write a function to get to the search page and get all the links 
     ## of the profiles that match the subject_name
     driver.get("https://www.facebook.com/search/people/?q="+subject_name)
-    time.sleep(5)
+    time.sleep(1)
     page_source = driver.page_source
     soup = BeautifulSoup(page_source, 'html.parser')
     ## Find all anchor tags with aria-hidden="true"
@@ -95,6 +95,7 @@ def get_links(subject_name, driver):
 
 def fetch_screen(name, driver):
     profiles = get_links(name,driver)[:5]
+    print(profiles)
     count = 1
     linkandpic = []
     for link in profiles:
@@ -108,7 +109,7 @@ def fetch_screen(name, driver):
         driver.execute_script("window.scrollTo(0, 500)")
         linkandpic.append([link,[]])
         while imct<=2:
-            time.sleep(5)
+            time.sleep(1)
             fname="Screenshot/"+str(count)+"_"+str(imct)+".png"
             driver.save_screenshot(fname)
             linkandpic[-1][1].append(fname)
@@ -118,13 +119,13 @@ def fetch_screen(name, driver):
     return linkandpic
 
 
-def validate_profile(name,image,driver):
+def validate_profile(name,images,driver):
     lnpc=fetch_screen(name,driver)
     recs=[]
     for i in lnpc:
         recs.append(i[1])
     print("Recognising and counting targets.")
-    pidx=face_utils.count_targets(['Test_images/Test.jpg'],recs)
+    pidx=face_utils.count_targets(images,recs)
     profile_link=lnpc[pidx][0].split("?ref")[0]
 
     return profile_link

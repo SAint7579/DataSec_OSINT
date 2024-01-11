@@ -4,7 +4,7 @@ import pickle
 import face_recognition
 from time import sleep
 
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+face_cascade = cv2.CascadeClassifier('C:/Users/vishw/OneDrive/Desktop/Projects/DataSec_OSINT/haarcascade_frontalface_default.xml')
 
 
 def train(name,imagePaths):
@@ -58,13 +58,13 @@ def recognize(imagePaths,data):
 				cv2.rectangle(img,(left,top),(right,bottom),(0,0,255),2)
 				y = top-15 if top-15>15 else top+15
 				cv2.putText(img,name,(left,y),cv2.FONT_HERSHEY_SIMPLEX,0.75,(0,0,255),2)
-			cv2.imshow('webcam', img)
+			## Make the imshow window smaller
+			cv2.resizeWindow('face recognition', 300,300)
 			while 1:
 				key = cv2.waitKey(1) & 0xff
 				if key == ord('q'):
 					cv2.destroyAllWindows()
 					break
-	print(names)
 	return names
 
 # enc=train("SID",["sid.jpg"])
