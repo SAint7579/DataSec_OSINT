@@ -128,48 +128,29 @@ def validate_profile(name,image,driver):
     profile_link=lnpc[pidx][0].split("?ref")[0]
 
     return profile_link
-    
-
-def download_friends(url,browser):
-    friends_html = "Friends/friends.html"
-    url = list(url)
-    url[10] = 'm'
-    url.pop(8)
-    url.pop(8)
-    url = ''.join(url)
-    browser.get(url + '/friends')
-    time.sleep(1)
-    browser.execute_script("window.scrollTo(0, 300)") 
-    # browser.find_element(By.XPATH, "//span[.='Friends']").click()
-    time.sleep(2)
-    # print('Scrolling to bottom...')
-    # #Scroll to bottom
-    # count = 0
-    # while browser.find_elements_by_css_selector('#m_more_friends') and count < 5:
-    #     browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    #     count+=1
-    #     time.sleep(1)
-
-    #Save friend list
-    with open (friends_html, 'w', encoding="utf-8") as f:
-        f.write(browser.page_source)
-        print('%s) Downloaded' % friends_html)
         
-def get_friends():
+def get_friends(profile_link,driver):
     '''
-    Take friends from friends folder's dumped xml file
-    '''
-    requests_session = requests.session()
-    requests_session.mount('file://', LocalFileAdapter())
-    data = requests_session.get('file://C:/Users/Admin/Desktop/Friends/friends.html')
+    Get the information from the profile link from facebook
 
-    fname_link = []
-    for a in re.findall(r'<a href="/[A-Za-z0-9.=?]+">.*?</a>',str(data.content)) :
-        a = a.split('"')
-        name = a[2].split("<")[0][1:]
-        link = "https://www.facebook.com"+a[1]
-        fname_link.append((name,link))
-    return fname_link
+    args:
+        profile_link: the link to the profile
+        driver: the selenium driver
+
+    returns:
+        a dictionary of the information
+    '''
+    username=profile_link.split("facebook.com/")[1]
+    driver.get("https://mbasic.facebook.com/"+username+"/friends")
+
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+    ## Get all the td tags with a tabs
+    friends = soup.find_all('td')
+    friends = [[i.find('a').text,'https://www.facebook.com/'+i.find('a')['href']] for i in friends if i.find('a')][4:-2]
+
+    return friends
+
 
 def get_info(profile_link, driver):
     '''
