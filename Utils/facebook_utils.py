@@ -15,6 +15,8 @@ from selenium.common import exceptions
 import importlib
 import os
 from bs4 import BeautifulSoup
+from collections import OrderedDict
+
 
 class LocalFileAdapter(requests.adapters.HTTPAdapter):
     def build_response_from_file(self, request):
@@ -166,6 +168,8 @@ def get_info(profile_link, driver):
     '''
     username=profile_link.split("facebook.com/")[1]
     driver.get("https://mbasic.facebook.com/"+username+"/about")
+
+
     def refine_list(fb_list):
         refined = []
         for f in fb_list:
@@ -176,7 +180,9 @@ def get_info(profile_link, driver):
                 idx = [i[0] for i in refined].index(f[0])
                 if len(f) > len(refined[idx]):
                     refined[idx] = f
-        return refined
+        return [list(OrderedDict.fromkeys(i)) for i in refined]
+    
+    
 
     ## Use beautiful soup to parse the html
     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -210,6 +216,7 @@ def get_info(profile_link, driver):
         family = [i for i in family.find_all('div')  if i.find('h3')]
         family = [[j.text for j in i.find_all('h3')] + ['https://www.facebook.com/' + i.find('h3').find('a')['href']] for i in family]
         family = [i for i in family if len(i) == 3]
+        family = refine_list(family)
 
     overview = soup.find('div', {"id":"year-overviews"})
     if overview:
