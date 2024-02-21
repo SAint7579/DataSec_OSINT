@@ -3,6 +3,7 @@ import os
 import pickle
 import face_recognition
 from time import sleep
+import matplotlib.pyplot as plt
 
 face_cascade = cv2.CascadeClassifier('C:/Users/vishw/OneDrive/Desktop/Projects/DataSec_OSINT/haarcascade_frontalface_default.xml')
 
@@ -58,8 +59,10 @@ def recognize(imagePaths,data):
 				cv2.rectangle(img,(left,top),(right,bottom),(0,0,255),2)
 				y = top-15 if top-15>15 else top+15
 				cv2.putText(img,name,(left,y),cv2.FONT_HERSHEY_SIMPLEX,0.75,(0,0,255),2)
-			## Make the imshow window smaller
-			cv2.resizeWindow('face recognition', 300,300)
+			cv2.imshow('face recognition', cv2.resize(img, (960, 540))  )
+			## Show with matplotlib
+			# plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+			# plt.show()
 			while 1:
 				key = cv2.waitKey(1) & 0xff
 				if key == ord('q'):
