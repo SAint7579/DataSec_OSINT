@@ -6,5 +6,6 @@
 - Create a cred.json file in the UI folder with the following structure:
 ```{"username": "FACEBOOK UN", "password": "FACEBOOK PASS", "linkedin_uname": "LINKEDIN UNAME", "linkedin_pass": "LINKEDIN PASS"}```
 - Run the user interface with ```streamlit run Home.py``` from the UI directory.
+- Change the system paths in the UI code files. It is currently using an absolute path.
 
 
