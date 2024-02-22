@@ -7,3 +7,8 @@ UI/target_image
 Demo.ipynb
 ___pycache__/
 UI/__pycache__/
+Utils/Dataset
+Utils/Screenshot
+Utils/__pycache__/
+Demo_facebook.ipynb
+Demo_linkedin.ipynb

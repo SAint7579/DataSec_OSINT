@@ -43,7 +43,7 @@ def start_browser():
     options.add_argument("--disable-infobars")
     options.add_argument("--mute-audio")
     options.add_argument("--start-maximized")
-    #options.add_argument("headless")
+    options.add_argument("headless")
     # options.add_experimental_option("prefs",{"profile.managed_default_content_settings.images":2})
     browser = Chrome(options=options)
 
@@ -127,10 +127,10 @@ def validate_profile(name,images,driver):
     for i in lnpc:
         recs.append(i[1])
     print("Recognising and counting targets.")
-    pidx=face_utils.count_targets(images,recs)
+    pidx=face_utils.count_targets(images,recs,show=False)
     profile_link=lnpc[pidx][0].split("?ref")[0]
 
-    return profile_link
+    return profile_link, [i[0] for i in lnpc]
         
 def get_friends(profile_link,driver):
     '''

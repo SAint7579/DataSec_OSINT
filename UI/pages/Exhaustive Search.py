@@ -23,7 +23,7 @@ def search_profile(full_name, images):
 
     # profile_link = links[0] # Can comment this out if validate_profile works
 
-    profile_link = validate_profile(full_name, images, browser) #Commented out since validate_profile is not working
+    profile_link,_ = validate_profile(full_name, images, browser) #Commented out since validate_profile is not working
 
     personal_info = get_info(profile_link, browser)
 
