@@ -1,8 +1,10 @@
-# Automated Open Source Intelligence
+# Autonomous Open Source Intelligence
 
-Insert usernames/emails, passwords and cookies wherever required.
-Get curlcmd by capturing analyze from https://azure.microsoft.com/en-ca/services/cognitive-services/text-analytics/ with query=REPLACEME.
+![alt text](https://github.com/SAint7579/DataSec_OSINT/blob/main/Images/SOCMINT.png)
 
-Run server from www direcory.
+## Instructions:
+- Create a cred.json file in the UI folder with the following structure:
+```{"username": "FACEBOOK UN", "password": "FACEBOOK PASS", "linkedin_uname": "LINKEDIN UNAME", "linkedin_pass": "LINKEDIN PASS"}```
+- Run the user interface with ```streamlit run Home.py``` from the UI directory.
 
-OSINT.ipynb contains fb profile search, face recognition, verification and Twitter sentiment and keywords analysis.
+
