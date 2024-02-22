@@ -10,5 +10,6 @@ UI/__pycache__/
 Utils/Dataset
 Utils/Screenshot
 Utils/__pycache__/
+Utils/*.xlsx
 Demo_facebook.ipynb
 Demo_linkedin.ipynb
