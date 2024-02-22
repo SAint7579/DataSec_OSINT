@@ -43,7 +43,7 @@ def start_browser():
     options.add_argument("--disable-infobars")
     options.add_argument("--mute-audio")
     options.add_argument("--start-maximized")
-    #options.add_argument("headless")
+    # options.add_argument("headless")
     # options.add_experimental_option("prefs",{"profile.managed_default_content_settings.images":2})
     browser = Chrome(options=options)
 
@@ -116,7 +116,7 @@ def fetch_profile_images(browser, name):
             pic = requests.get(pic_url)
             with open(f'Screenshot/{i}.jpg', 'wb') as f:
                 f.write(pic.content)
-            link_and_pictures.append((link, [f'UI/Screenshot/{i}.jpg']))
+            link_and_pictures.append((link, [f'Screenshot/{i}.jpg']))
 
     return link_and_pictures
 
@@ -130,5 +130,44 @@ def validate_profile(name,images,browser):
     pidx=face_utils.count_targets(images,recs)
     profile_link=lnpc[pidx][0].split("?ref")[0]
 
-    return profile_link
-        
+    return profile_link.split('?')[0]
+
+def get_post(browser, link):
+    link = link + '/recent-activity/all/'
+    browser.get(link)
+    ## Scroll down 
+    for i in range(5):
+        browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(1)
+    ## Get all span with dir = "ltr"
+    try:
+        posts = browser.find_elements(By.XPATH, '//span[@dir="ltr"]')
+        posts = [post.text for post in posts]
+        return [i for i in posts if posts.count(i) == 1]
+    except Exception as e:
+        print(e)
+        print("Posts not found")
+        return None        
+
+def get_jobs(browser, link):
+    link = link + '/details/experience/'
+    browser.get(link)
+    ## Scroll down
+    for i in range(5):
+        browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(1)
+
+    try:
+        # Find all divs with data-view-name="profile-component-entity" with BeautifulSoup
+        soup = BeautifulSoup(browser.page_source, 'html.parser')
+        jobs = soup.find_all('div', {'data-view-name': 'profile-component-entity'})
+        job_info = []
+        for job in jobs:
+            job_info.append([i.text for i in job.find_all('span', {'aria-hidden': 'true'})])
+
+        return [i for i in job_info if len(i) > 3]
+
+    except Exception as e:
+        print(e)
+        print("Jobs not found")
+        return None

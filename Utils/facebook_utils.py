@@ -51,7 +51,7 @@ def start_browser():
 
 def sign_in(browser, FBEMAIL, FBPASS):
     #Sign in
-    fb_start_page = 'https://m.facebook.com/'
+    fb_start_page = 'https://www.facebook.com/'
     fb_user = FBEMAIL
     fb_pass = FBPASS
     print("Logging in %s automatically..." % fb_user)

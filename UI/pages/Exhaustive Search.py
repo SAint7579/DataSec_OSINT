@@ -73,11 +73,29 @@ with st.spinner("Fetching information..."):
         st.success("Result:")
         for category, data in result.items():
             if data is not None:
-                st.write(f"**{category.capitalize()}**")
-                for lst in data:
-                    for item in lst:
-                        if item is not None:
-                            st.write(item)
+                if category == "education":
+                    st.write("**EDUCATION**")
+                    for lst in data:
+                        with st.expander(lst[0]):
+                            for item in lst[1:]:
+                                if item is not None:
+                                    st.write(item)
+                
+                elif category== "work":
+                    st.write("**WORK**")
+                    for lst in data:
+                        with st.expander(lst[0]):
+                            for item in lst[1:]:
+                                st.write(item)
+                else:
+                    st.write(f"**{category.capitalize()}**")
+                    for lst in data:
+                        if len(lst) > 1:
+                            st.write('---'.join(lst))
+                        else:
+                            st.write(lst[0])
+                        
+
                 st.markdown("---")
 
         st.container()

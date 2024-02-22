@@ -26,7 +26,7 @@ def train(name,imagePaths):
 	return data
 
 
-def recognize(imagePaths,data):
+def recognize(imagePaths,data, show=True):
 	names = []
 	if type(imagePaths)==str:
 		imagePaths=[imagePaths]
@@ -54,7 +54,7 @@ def recognize(imagePaths,data):
 
 				name = max(counts,key=counts.get)
 			names.append(name)
-		if show_FLAG:
+		if show_FLAG and show:
 			for((top,right,bottom,left),name) in zip(boxes,names):
 				cv2.rectangle(img,(left,top),(right,bottom),(0,0,255),2)
 				y = top-15 if top-15>15 else top+15
@@ -76,12 +76,12 @@ def recognize(imagePaths,data):
 # recognize(imgPath,enc)
 
 TARGET="TARGET"
-def count_targets(trainImgs,recImgs):		# (list,list) give it lists
+def count_targets(trainImgs,recImgs,show=True):		# (list,list) give it lists
 	enc=train(name=TARGET,imagePaths=trainImgs)
 	mIdx=0
 	mx=0
 	for idx,rmg in enumerate(recImgs):
-		nms=recognize(imagePaths=rmg,data=enc)
+		nms=recognize(imagePaths=rmg,data=enc,show=show)
 		nc=nms.count(TARGET)
 		if nc>mx:
 			mx=nc
