@@ -16,7 +16,11 @@ import importlib
 import os
 from bs4 import BeautifulSoup
 from collections import OrderedDict
-
+from nltk.corpus import stopwords
+from sklearn.feature_extraction.text import CountVectorizer
+from bertopic import BERTopic
+from textblob import TextBlob
+from sentence_transformers import SentenceTransformer
 
 class LocalFileAdapter(requests.adapters.HTTPAdapter):
     def build_response_from_file(self, request):
@@ -171,3 +175,39 @@ def get_jobs(browser, link):
         print(e)
         print("Jobs not found")
         return None
+    
+def model_topic(posts):
+    ## Select the posts that only occur once in the list
+    posts = [i for i in posts if posts.count(i) == 1]
+    # Remove all urls and emojis from the posts
+    posts = [re.sub(r'http\S+', '', post) for post in posts]
+    posts = [re.sub(r'[^a-zA-Z0-9\s]', '', post) for post in posts]
+    posts = [re.sub(r'[\n]', ' ', post) for post in posts]
+    posts = [re.sub(r'[0-9]', '', post) for post in posts]
+    posts = [re.sub(r'  ', ' ', post) for post in posts]
+
+    ## Convert all to lower case and lemmatize
+    posts = [TextBlob(post).lower() for post in posts]
+    posts = [post.words.lemmatize() for post in posts]
+    posts = [' '.join(post) for post in posts]
+
+    ## Only keep the posts that are not empty
+    posts = [post for post in posts if post != '']
+    ## Split long posts into smaller ones
+    posts = [post.split(' ') for post in posts]
+    posts = [post[i:i+10] for post in posts for i in range(0, len(post), 10)]
+    posts = [' '.join(post) for post in posts]
+
+    #Use CountVectorizer to remove stopwords
+    vectorizer_model = CountVectorizer(stop_words= stopwords.words('english'))
+    sentence_model = SentenceTransformer('vinai/bertweet-base')
+    topic_model = BERTopic(embedding_model=sentence_model, min_topic_size=2, vectorizer_model=vectorizer_model,low_memory=True,calculate_probabilities=True,verbose=True, n_gram_range=(1, 3))
+
+    # Fit the model on the posts
+    topic_model.fit(posts)
+
+    embeddings = sentence_model.encode(posts, show_progress_bar=False)
+    doc_vis = topic_model.visualize_documents(posts, embeddings=embeddings)
+    bar_vis = topic_model.visualize_barchart(top_n_topics=10)
+
+    return doc_vis, bar_vis

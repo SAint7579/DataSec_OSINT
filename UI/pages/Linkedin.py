@@ -15,7 +15,7 @@ from textblob import TextBlob
 sys.path.append(os.path.join(os.path.dirname(__file__), "C:/Users/vishw/OneDrive/Desktop/Projects/DataSec_OSINT/"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "C:/Users/vishw/OneDrive/Desktop/Projects/DataSec_OSINT/Utils"))
 from glob import glob
-from linkedin_utils import start_browser, sign_in, validate_profile, get_post, get_jobs
+from linkedin_utils import start_browser, sign_in, validate_profile, get_post, get_jobs, model_topic
 
 with open('C:/Users/vishw/OneDrive/Desktop/Projects/DataSec_OSINT/UI/cred.json') as f:
     cred = json.load(f)
@@ -82,7 +82,10 @@ with st.spinner("Fetching information..."):
                         st.write(item)
 
         st.write("**POSTS**")
-        for post in posts:
-            st.write(post)
+        doc_vis, bar_vis = model_topic(posts)
+
+        ## Plotting visualization
+        st.plotly_chart(doc_vis, use_container_width=True)
+        st.plotly_chart(bar_vis, use_container_width=True)
             
 
